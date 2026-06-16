@@ -112,6 +112,60 @@ class AdminController extends Controller
     }
 
     /**
+     * Store a new lesson group in a course.
+     */
+    public function storeLessonGroup(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'course_id' => ['required', 'exists:courses,id'],
+            'title' => ['required', 'string', 'max:255'],
+            'order_number' => ['nullable', 'integer', 'min:0'],
+        ]);
+
+        $validated['order_number'] = $validated['order_number'] ?? 0;
+
+        $lessonGroup = \App\Models\LessonGroup::create($validated);
+
+        return response()->json([
+            'message' => 'تم إضافة مجموعة الدروس بنجاح.',
+            'lesson_group' => $lessonGroup,
+        ], 201);
+    }
+
+    /**
+     * Update an existing lesson group.
+     */
+    public function updateLessonGroup(Request $request, int|string $id): JsonResponse
+    {
+        $lessonGroup = \App\Models\LessonGroup::findOrFail($id);
+
+        $validated = $request->validate([
+            'title' => ['required', 'string', 'max:255'],
+            'order_number' => ['required', 'integer', 'min:0'],
+        ]);
+
+        $lessonGroup->update($validated);
+
+        return response()->json([
+            'message' => 'تم تحديث مجموعة الدروس بنجاح.',
+            'lesson_group' => $lessonGroup,
+        ]);
+    }
+
+    /**
+     * Delete an existing lesson group.
+     */
+    public function deleteLessonGroup(int|string $id): JsonResponse
+    {
+        $lessonGroup = \App\Models\LessonGroup::findOrFail($id);
+        $lessonGroup->delete();
+
+        return response()->json([
+            'message' => 'تم حذف مجموعة الدروس بنجاح.',
+        ]);
+    }
+
+    /**
      * Store a new lesson in a course.
      */
     public function storeLesson(Request $request): JsonResponse
@@ -122,6 +176,7 @@ class AdminController extends Controller
             'youtube_video_id' => ['required', 'string', 'max:255'],
             'duration_in_seconds' => ['required', 'integer', 'min:1'],
             'order_number' => ['nullable', 'integer', 'min:0'],
+            'lesson_group_id' => ['nullable', 'exists:lesson_groups,id'],
         ]);
 
         $validated['order_number'] = $validated['order_number'] ?? 0;
@@ -146,6 +201,7 @@ class AdminController extends Controller
             'youtube_video_id' => ['required', 'string', 'max:255'],
             'duration_in_seconds' => ['required', 'integer', 'min:1'],
             'order_number' => ['required', 'integer', 'min:0'],
+            'lesson_group_id' => ['nullable', 'exists:lesson_groups,id'],
         ]);
 
         $lesson->update($validated);

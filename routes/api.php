@@ -40,5 +40,9 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/lessons', [AdminController::class, 'storeLesson']);
         Route::put('/lessons/{id}', [AdminController::class, 'updateLesson']);
         Route::delete('/lessons/{id}', [AdminController::class, 'deleteLesson']);
+
+        Route::post('/lesson-groups', [AdminController::class, 'storeLessonGroup']);
+        Route::put('/lesson-groups/{id}', [AdminController::class, 'updateLessonGroup']);
+        Route::delete('/lesson-groups/{id}', [AdminController::class, 'deleteLessonGroup']);
     });
 });

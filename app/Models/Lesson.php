@@ -34,6 +34,14 @@ class Lesson extends Model
     }
 
     /**
+     * Get the lesson group that owns the lesson.
+     */
+    public function lessonGroup(): BelongsTo
+    {
+        return $this->belongsTo(LessonGroup::class);
+    }
+
+    /**
      * Get the progress records for the lesson.
      */
     public function lessonProgress(): HasMany

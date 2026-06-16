@@ -23,9 +23,16 @@ class CourseController extends Controller
      */
     public function show(int|string $id): JsonResponse
     {
-        $course = Course::with(['lessons' => function ($query) {
-            $query->orderBy('order_number', 'asc');
-        }])->findOrFail($id);
+        $course = Course::with([
+            'lessonGroups' => function ($query) {
+                $query->orderBy('order_number', 'asc')->with(['lessons' => function ($query) {
+                    $query->orderBy('order_number', 'asc');
+                }]);
+            },
+            'lessons' => function ($query) {
+                $query->whereNull('lesson_group_id')->orderBy('order_number', 'asc');
+            }
+        ])->findOrFail($id);
 
         return response()->json($course);
     }
