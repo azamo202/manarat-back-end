@@ -72,6 +72,18 @@ class ProgressController extends Controller
     }
 
     /**
+     * Retrieve a list of completed lesson IDs for the authenticated user.
+     */
+    public function completedLessons(): JsonResponse
+    {
+        $ids = LessonProgress::where('user_id', Auth::id())
+            ->where('is_completed', true)
+            ->pluck('lesson_id');
+
+        return response()->json($ids);
+    }
+
+    /**
      * Retrieve the user's enrolled courses with lesson count and last watched lesson.
      */
     public function myCourses(): JsonResponse
@@ -84,13 +96,21 @@ class ProgressController extends Controller
             })->get();
 
         foreach ($courses as $course) {
+            $lessonIds = $course->lessons->pluck('id');
+
             $lastProgress = LessonProgress::where('user_id', $user->id)
-                ->whereIn('lesson_id', $course->lessons->pluck('id'))
+                ->whereIn('lesson_id', $lessonIds)
                 ->orderBy('updated_at', 'desc')
                 ->with('lesson')
                 ->first();
                 
             $course->last_lesson = $lastProgress ? $lastProgress->lesson->title : 'لم يبدأ بعد';
+
+            // Calculate completed lessons count
+            $course->completed_lessons_count = LessonProgress::where('user_id', $user->id)
+                ->whereIn('lesson_id', $lessonIds)
+                ->where('is_completed', true)
+                ->count();
         }
 
         return response()->json($courses);

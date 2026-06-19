@@ -63,9 +63,15 @@ class AdminController extends Controller
             'teacher' => ['nullable', 'string', 'max:255'],
             'level' => ['nullable', 'string', 'max:100'],
             'is_active' => ['nullable', 'boolean'],
+            'cover_image' => ['nullable', 'image', 'mimes:jpeg,png,jpg,gif,svg,webp', 'max:2048'],
         ]);
 
-        $validated['is_active'] = $validated['is_active'] ?? true;
+        $validated['is_active'] = $request->has('is_active') ? $request->boolean('is_active') : true;
+
+        if ($request->hasFile('cover_image')) {
+            $path = $request->file('cover_image')->store('courses', 'public');
+            $validated['cover_image'] = $path;
+        }
 
         $course = Course::create($validated);
 
@@ -88,7 +94,24 @@ class AdminController extends Controller
             'teacher' => ['nullable', 'string', 'max:255'],
             'level' => ['nullable', 'string', 'max:100'],
             'is_active' => ['required', 'boolean'],
+            'cover_image' => ['nullable', 'image', 'mimes:jpeg,png,jpg,gif,svg,webp', 'max:2048'],
+            'delete_cover_image' => ['nullable', 'boolean'],
         ]);
+
+        $validated['is_active'] = $request->boolean('is_active');
+
+        if ($request->boolean('delete_cover_image')) {
+            if ($course->cover_image) {
+                \Illuminate\Support\Facades\Storage::disk('public')->delete($course->cover_image);
+            }
+            $validated['cover_image'] = null;
+        } elseif ($request->hasFile('cover_image')) {
+            if ($course->cover_image) {
+                \Illuminate\Support\Facades\Storage::disk('public')->delete($course->cover_image);
+            }
+            $path = $request->file('cover_image')->store('courses', 'public');
+            $validated['cover_image'] = $path;
+        }
 
         $course->update($validated);
 
