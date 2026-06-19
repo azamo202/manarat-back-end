@@ -45,11 +45,15 @@ class AdminController extends Controller
     /**
      * Get list of all courses (active and inactive).
      */
-    public function courses(): JsonResponse
+    public function courses(Request $request): JsonResponse
     {
-        $courses = Course::withCount('lessons')->orderBy('created_at', 'desc')->get();
-
-        return response()->json($courses);
+        $query = Course::withCount('lessons')->orderBy('created_at', 'desc');
+        
+        if ($request->has('section')) {
+            $query->where('section', $request->query('section'));
+        }
+        
+        return response()->json($query->get());
     }
 
     /**
@@ -63,11 +67,13 @@ class AdminController extends Controller
             'teacher' => ['nullable', 'string', 'max:255'],
             'level' => ['nullable', 'string', 'max:100'],
             'is_active' => ['nullable', 'boolean'],
+            'section' => ['nullable', 'string', 'in:homepage,general'],
             'cover_image' => ['nullable', 'image', 'mimes:jpeg,png,jpg,gif,svg,webp', 'max:2048'],
             'plan_file' => ['nullable', 'file', 'mimes:pdf', 'max:10240'],
         ]);
 
         $validated['is_active'] = $request->has('is_active') ? $request->boolean('is_active') : true;
+        $validated['section'] = $request->input('section', 'homepage');
 
         if ($request->hasFile('cover_image')) {
             $path = $request->file('cover_image')->store('courses', 'public');
@@ -100,6 +106,7 @@ class AdminController extends Controller
             'teacher' => ['nullable', 'string', 'max:255'],
             'level' => ['nullable', 'string', 'max:100'],
             'is_active' => ['required', 'boolean'],
+            'section' => ['nullable', 'string', 'in:homepage,general'],
             'cover_image' => ['nullable', 'image', 'mimes:jpeg,png,jpg,gif,svg,webp', 'max:2048'],
             'delete_cover_image' => ['nullable', 'boolean'],
             'plan_file' => ['nullable', 'file', 'mimes:pdf', 'max:10240'],
