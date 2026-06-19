@@ -64,6 +64,7 @@ class AdminController extends Controller
             'level' => ['nullable', 'string', 'max:100'],
             'is_active' => ['nullable', 'boolean'],
             'cover_image' => ['nullable', 'image', 'mimes:jpeg,png,jpg,gif,svg,webp', 'max:2048'],
+            'plan_file' => ['nullable', 'file', 'mimes:pdf', 'max:10240'],
         ]);
 
         $validated['is_active'] = $request->has('is_active') ? $request->boolean('is_active') : true;
@@ -71,6 +72,11 @@ class AdminController extends Controller
         if ($request->hasFile('cover_image')) {
             $path = $request->file('cover_image')->store('courses', 'public');
             $validated['cover_image'] = $path;
+        }
+
+        if ($request->hasFile('plan_file')) {
+            $path = $request->file('plan_file')->store('courses/plans', 'public');
+            $validated['plan_file'] = $path;
         }
 
         $course = Course::create($validated);
@@ -96,6 +102,8 @@ class AdminController extends Controller
             'is_active' => ['required', 'boolean'],
             'cover_image' => ['nullable', 'image', 'mimes:jpeg,png,jpg,gif,svg,webp', 'max:2048'],
             'delete_cover_image' => ['nullable', 'boolean'],
+            'plan_file' => ['nullable', 'file', 'mimes:pdf', 'max:10240'],
+            'delete_plan_file' => ['nullable', 'boolean'],
         ]);
 
         $validated['is_active'] = $request->boolean('is_active');
@@ -111,6 +119,19 @@ class AdminController extends Controller
             }
             $path = $request->file('cover_image')->store('courses', 'public');
             $validated['cover_image'] = $path;
+        }
+
+        if ($request->boolean('delete_plan_file')) {
+            if ($course->plan_file) {
+                \Illuminate\Support\Facades\Storage::disk('public')->delete($course->plan_file);
+            }
+            $validated['plan_file'] = null;
+        } elseif ($request->hasFile('plan_file')) {
+            if ($course->plan_file) {
+                \Illuminate\Support\Facades\Storage::disk('public')->delete($course->plan_file);
+            }
+            $path = $request->file('plan_file')->store('courses/plans', 'public');
+            $validated['plan_file'] = $path;
         }
 
         $course->update($validated);

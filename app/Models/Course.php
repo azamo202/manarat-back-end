@@ -9,7 +9,7 @@ class Course extends Model
 {
     protected $guarded = [];
 
-    protected $appends = ['cover_image_url'];
+    protected $appends = ['cover_image_url', 'plan_file_url'];
 
     /**
      * Get the cover image full URL.
@@ -17,6 +17,14 @@ class Course extends Model
     public function getCoverImageUrlAttribute()
     {
         return $this->cover_image ? asset('storage/' . $this->cover_image) : null;
+    }
+
+    /**
+     * Get the plan file full URL.
+     */
+    public function getPlanFileUrlAttribute()
+    {
+        return $this->plan_file ? asset('storage/' . $this->plan_file) : null;
     }
 
     /**
