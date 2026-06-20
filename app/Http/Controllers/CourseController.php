@@ -13,9 +13,7 @@ class CourseController extends Controller
      */
     public function index(): JsonResponse
     {
-        $courses = Course::where('is_active', true)
-                         ->where('section', 'homepage')
-                         ->get();
+        $courses = Course::where('is_active', true)->get();
 
         return response()->json($courses);
     }
