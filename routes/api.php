@@ -22,6 +22,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/my-courses', [ProgressController::class, 'myCourses']);
     Route::get('/completed-lessons', [ProgressController::class, 'completedLessons']);
     Route::post('/lessons/{lesson}/progress', [ProgressController::class, 'syncProgress']);
+    Route::post('/lessons/{lesson}/notes', [ProgressController::class, 'saveNotes']);
     Route::get('/courses/{course}/lessons/{lesson}', [LessonController::class, 'show']);
 
     Route::get('/courses/{id}', [CourseController::class, 'show']);

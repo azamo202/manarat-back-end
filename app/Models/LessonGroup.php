@@ -9,6 +9,15 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 class LessonGroup extends Model
 {
     protected $guarded = [];
+    protected $appends = ['pdf_file_url'];
+
+    /**
+     * Get the URL for the attached PDF file if it exists.
+     */
+    public function getPdfFileUrlAttribute()
+    {
+        return $this->pdf_file ? url('storage/' . $this->pdf_file) : null;
+    }
 
     /**
      * Get the course that owns the lesson group.

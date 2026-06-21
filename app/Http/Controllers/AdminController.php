@@ -171,9 +171,15 @@ class AdminController extends Controller
             'course_id' => ['required', 'exists:courses,id'],
             'title' => ['required', 'string', 'max:255'],
             'order_number' => ['nullable', 'integer', 'min:0'],
+            'pdf_file' => ['nullable', 'file', 'mimes:pdf', 'max:10240'],
         ]);
 
         $validated['order_number'] = $validated['order_number'] ?? 0;
+
+        if ($request->hasFile('pdf_file')) {
+            $path = $request->file('pdf_file')->store('lesson_groups/pdfs', 'public');
+            $validated['pdf_file'] = $path;
+        }
 
         $lessonGroup = \App\Models\LessonGroup::create($validated);
 
@@ -193,7 +199,22 @@ class AdminController extends Controller
         $validated = $request->validate([
             'title' => ['required', 'string', 'max:255'],
             'order_number' => ['required', 'integer', 'min:0'],
+            'pdf_file' => ['nullable', 'file', 'mimes:pdf', 'max:10240'],
+            'delete_pdf_file' => ['nullable', 'boolean'],
         ]);
+
+        if ($request->boolean('delete_pdf_file')) {
+            if ($lessonGroup->pdf_file) {
+                \Illuminate\Support\Facades\Storage::disk('public')->delete($lessonGroup->pdf_file);
+            }
+            $validated['pdf_file'] = null;
+        } elseif ($request->hasFile('pdf_file')) {
+            if ($lessonGroup->pdf_file) {
+                \Illuminate\Support\Facades\Storage::disk('public')->delete($lessonGroup->pdf_file);
+            }
+            $path = $request->file('pdf_file')->store('lesson_groups/pdfs', 'public');
+            $validated['pdf_file'] = $path;
+        }
 
         $lessonGroup->update($validated);
 
@@ -209,6 +230,11 @@ class AdminController extends Controller
     public function deleteLessonGroup(int|string $id): JsonResponse
     {
         $lessonGroup = \App\Models\LessonGroup::findOrFail($id);
+        
+        if ($lessonGroup->pdf_file) {
+            \Illuminate\Support\Facades\Storage::disk('public')->delete($lessonGroup->pdf_file);
+        }
+        
         $lessonGroup->delete();
 
         return response()->json([

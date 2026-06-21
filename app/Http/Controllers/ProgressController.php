@@ -25,6 +25,7 @@ class ProgressController extends Controller
         return response()->json([
             'current_second' => $progress ? $progress->current_second : 0,
             'is_completed' => $progress ? (bool) $progress->is_completed : false,
+            'personal_notes' => $progress ? $progress->personal_notes : null,
         ]);
     }
 
@@ -145,6 +146,32 @@ class ProgressController extends Controller
         return response()->json([
             'status' => 'success',
             'is_completed' => (bool)$progress->is_completed,
+        ]);
+    }
+
+    /**
+     * Save the user's personal notes for a lesson.
+     */
+    public function saveNotes(Request $request, int|string $lessonId): JsonResponse
+    {
+        $validated = $request->validate([
+            'notes' => ['nullable', 'string', 'max:10000'],
+        ]);
+
+        $user = Auth::user();
+        $lesson = Lesson::findOrFail($lessonId);
+
+        $progress = LessonProgress::firstOrCreate(
+            ['user_id' => $user->id, 'lesson_id' => $lesson->id],
+            ['current_second' => 0, 'is_completed' => false]
+        );
+
+        $progress->personal_notes = $validated['notes'] ?? null;
+        $progress->save();
+
+        return response()->json([
+            'status' => 'success',
+            'message' => 'تم حفظ الملاحظات بنجاح.',
         ]);
     }
 }
