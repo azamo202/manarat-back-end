@@ -12,6 +12,23 @@ class Lesson extends Model
 
     protected $appends = ['youtube_id', 'duration'];
 
+    protected static function booted()
+    {
+        static::saved(function ($lesson) {
+            \Illuminate\Support\Facades\Cache::forget("lesson.{$lesson->id}");
+            if ($lesson->course_id) {
+                \Illuminate\Support\Facades\Cache::forget("course.{$lesson->course_id}");
+            }
+        });
+
+        static::deleted(function ($lesson) {
+            \Illuminate\Support\Facades\Cache::forget("lesson.{$lesson->id}");
+            if ($lesson->course_id) {
+                \Illuminate\Support\Facades\Cache::forget("course.{$lesson->course_id}");
+            }
+        });
+    }
+
     public function getYoutubeIdAttribute(): string
     {
         return $this->youtube_video_id ?? '';

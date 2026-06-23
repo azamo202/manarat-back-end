@@ -21,15 +21,19 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::get('/my-courses', [ProgressController::class, 'myCourses']);
     Route::get('/completed-lessons', [ProgressController::class, 'completedLessons']);
-    Route::post('/lessons/{lesson}/progress', [ProgressController::class, 'syncProgress']);
-    Route::post('/lessons/{lesson}/notes', [ProgressController::class, 'saveNotes']);
+    
+    Route::middleware('throttle:60,1')->group(function () {
+        Route::post('/lessons/{lesson}/progress', [ProgressController::class, 'syncProgress']);
+        Route::post('/lessons/{lesson}/notes', [ProgressController::class, 'saveNotes']);
+        Route::post('/progress/ping', [ProgressController::class, 'ping']);
+    });
+
     Route::get('/courses/{course}/lessons/{lesson}', [LessonController::class, 'show']);
 
     Route::get('/courses/{id}', [CourseController::class, 'show']);
     Route::get('/lessons/{id}', [LessonController::class, 'show']);
 
     Route::get('/progress/{lesson}', [ProgressController::class, 'show']);
-    Route::post('/progress/ping', [ProgressController::class, 'ping']);
 
     // Admin-only Routes
     Route::middleware('admin')->prefix('admin')->group(function () {

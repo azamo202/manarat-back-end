@@ -11,6 +11,19 @@ class Course extends Model
 
     protected $appends = ['cover_image_url', 'plan_file_url'];
 
+    protected static function booted()
+    {
+        static::saved(function ($course) {
+            \Illuminate\Support\Facades\Cache::forget('courses.active');
+            \Illuminate\Support\Facades\Cache::forget("course.{$course->id}");
+        });
+
+        static::deleted(function ($course) {
+            \Illuminate\Support\Facades\Cache::forget('courses.active');
+            \Illuminate\Support\Facades\Cache::forget("course.{$course->id}");
+        });
+    }
+
     /**
      * Get the cover image full URL.
      */

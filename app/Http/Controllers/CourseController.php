@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use App\Models\Course;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Http\Request;
 
 class CourseController extends Controller
 {
@@ -13,7 +15,9 @@ class CourseController extends Controller
      */
     public function index(): JsonResponse
     {
-        $courses = Course::where('is_active', true)->get();
+        $courses = Cache::remember('courses.active', 3600, function () {
+            return Course::where('is_active', true)->get();
+        });
 
         return response()->json($courses);
     }
@@ -23,16 +27,18 @@ class CourseController extends Controller
      */
     public function show(int|string $id): JsonResponse
     {
-        $course = Course::with([
-            'lessonGroups' => function ($query) {
-                $query->orderBy('order_number', 'asc')->with(['lessons' => function ($query) {
-                    $query->orderBy('order_number', 'asc');
-                }]);
-            },
-            'lessons' => function ($query) {
-                $query->whereNull('lesson_group_id')->orderBy('order_number', 'asc');
-            }
-        ])->findOrFail($id);
+        $course = Cache::remember("course.{$id}", 3600, function () use ($id) {
+            return Course::with([
+                'lessonGroups' => function ($query) {
+                    $query->orderBy('order_number', 'asc')->with(['lessons' => function ($query) {
+                        $query->orderBy('order_number', 'asc');
+                    }]);
+                },
+                'lessons' => function ($query) {
+                    $query->whereNull('lesson_group_id')->orderBy('order_number', 'asc');
+                }
+            ])->findOrFail($id);
+        });
 
         return response()->json($course);
     }

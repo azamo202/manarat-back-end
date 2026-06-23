@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use App\Models\Lesson;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Http\Request;
 
 class LessonController extends Controller
 {
@@ -13,7 +15,9 @@ class LessonController extends Controller
      */
     public function show(int|string $id): JsonResponse
     {
-        $lesson = Lesson::with('course')->findOrFail($id);
+        $lesson = Cache::remember("lesson.{$id}", 3600, function () use ($id) {
+            return Lesson::with('course')->findOrFail($id);
+        });
 
         return response()->json($lesson);
     }

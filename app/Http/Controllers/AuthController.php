@@ -37,11 +37,15 @@ class AuthController extends Controller
         $credentials = $request->validate([
             'email' => ['required', 'string', 'email'],
             'password' => ['required', 'string'],
+        ], [
+            'email.required' => 'حقل البريد الإلكتروني مطلوب.',
+            'email.email' => 'البريد الإلكتروني غير صحيح.',
+            'password.required' => 'حقل كلمة المرور مطلوب.',
         ]);
 
         if (!Auth::attempt($credentials)) {
             return response()->json([
-                'message' => 'Invalid credentials',
+                'message' => 'بيانات الدخول غير صحيحة.',
             ], 401);
         }
 

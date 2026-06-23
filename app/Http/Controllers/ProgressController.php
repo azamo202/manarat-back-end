@@ -91,27 +91,36 @@ class ProgressController extends Controller
     {
         $user = Auth::user();
         
+        // Eager load lessons (only id and course_id) to avoid N+1 when plucking IDs
         $courses = \App\Models\Course::withCount('lessons')
+            ->with('lessons:id,course_id')
             ->whereHas('lessons.lessonProgress', function ($query) use ($user) {
                 $query->where('user_id', $user->id);
             })->get();
 
+        $allLessonIds = $courses->flatMap->lessons->pluck('id');
+
+        // Fetch all progress for these lessons in ONE query
+        $progresses = LessonProgress::where('user_id', $user->id)
+            ->whereIn('lesson_id', $allLessonIds)
+            ->with('lesson:id,title')
+            ->get();
+
         foreach ($courses as $course) {
-            $lessonIds = $course->lessons->pluck('id');
-
-            $lastProgress = LessonProgress::where('user_id', $user->id)
-                ->whereIn('lesson_id', $lessonIds)
-                ->orderBy('updated_at', 'desc')
-                ->with('lesson')
-                ->first();
+            $courseLessonIds = $course->lessons->pluck('id');
+            
+            // Filter progress in-memory for this course
+            $courseProgresses = $progresses->whereIn('lesson_id', $courseLessonIds);
+            
+            $lastProgress = $courseProgresses->sortByDesc('updated_at')->first();
                 
-            $course->last_lesson = $lastProgress ? $lastProgress->lesson->title : 'لم يبدأ بعد';
+            $course->last_lesson = $lastProgress && $lastProgress->lesson ? $lastProgress->lesson->title : 'لم يبدأ بعد';
 
-            // Calculate completed lessons count
-            $course->completed_lessons_count = LessonProgress::where('user_id', $user->id)
-                ->whereIn('lesson_id', $lessonIds)
-                ->where('is_completed', true)
-                ->count();
+            // Calculate completed lessons count in-memory
+            $course->completed_lessons_count = $courseProgresses->where('is_completed', true)->count();
+            
+            // Unset lessons relation to not bloat the JSON response
+            unset($course->lessons);
         }
 
         return response()->json($courses);
