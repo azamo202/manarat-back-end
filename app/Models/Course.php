@@ -55,4 +55,12 @@ class Course extends Model
     {
         return $this->hasMany(LessonGroup::class);
     }
+
+    /**
+     * Get the quizzes for the course.
+     */
+    public function quizzes(): HasMany
+    {
+        return $this->hasMany(Quiz::class);
+    }
 }

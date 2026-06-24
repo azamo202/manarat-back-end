@@ -4,6 +4,12 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\CourseController;
 use App\Http\Controllers\LessonController;
 use App\Http\Controllers\ProgressController;
+use App\Http\Controllers\Quiz\Admin\QuizAnalyticsController;
+use App\Http\Controllers\Quiz\Admin\QuizController as AdminQuizController;
+use App\Http\Controllers\Quiz\Admin\QuestionController;
+use App\Http\Controllers\Quiz\Student\AttemptController;
+use App\Http\Controllers\Quiz\Student\QuizController as StudentQuizController;
+use App\Http\Controllers\Quiz\Student\ResultController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -35,8 +41,32 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::get('/progress/{lesson}', [ProgressController::class, 'show']);
 
-    // Admin-only Routes
+    // ─── Student Quiz Routes ──────────────────────────────────────────────────
+    Route::get('/quizzes', [StudentQuizController::class, 'index']);
+    Route::get('/quizzes/{quiz}', [StudentQuizController::class, 'show']);
+
+    // My results
+    Route::get('/my/quiz-results', [ResultController::class, 'myResults']);
+
+    // Attempt lifecycle
+    Route::middleware('throttle:10,1')->group(function () {
+        Route::post('/quizzes/{quiz}/attempts', [AttemptController::class, 'start']);
+    });
+
+    Route::get('/quizzes/{quiz}/attempts/{attempt}', [AttemptController::class, 'show']);
+
+    Route::middleware('throttle:120,1')->group(function () {
+        Route::put('/quizzes/{quiz}/attempts/{attempt}/answers', [AttemptController::class, 'saveAnswers']);
+    });
+
+    Route::post('/quizzes/{quiz}/attempts/{attempt}/submit', [AttemptController::class, 'submit']);
+
+    // Results
+    Route::get('/quizzes/{quiz}/results/{result}', [ResultController::class, 'show']);
+
+    // ─── Admin-only Routes ────────────────────────────────────────────────────
     Route::middleware('admin')->prefix('admin')->group(function () {
+        // Existing admin routes
         Route::get('/stats', [AdminController::class, 'stats']);
         Route::get('/users', [AdminController::class, 'users']);
         Route::get('/courses', [AdminController::class, 'courses']);
@@ -50,5 +80,29 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/lesson-groups', [AdminController::class, 'storeLessonGroup']);
         Route::put('/lesson-groups/{id}', [AdminController::class, 'updateLessonGroup']);
         Route::delete('/lesson-groups/{id}', [AdminController::class, 'deleteLessonGroup']);
+
+        // ─── Quiz Management ──────────────────────────────────────────────────
+        Route::get('/quizzes', [AdminQuizController::class, 'index']);
+        Route::post('/quizzes', [AdminQuizController::class, 'store']);
+        Route::get('/quizzes/{id}', [AdminQuizController::class, 'show']);
+        Route::put('/quizzes/{id}', [AdminQuizController::class, 'update']);
+        Route::delete('/quizzes/{id}', [AdminQuizController::class, 'destroy']);
+        Route::post('/quizzes/{id}/publish', [AdminQuizController::class, 'publish']);
+        Route::post('/quizzes/{id}/archive', [AdminQuizController::class, 'archive']);
+        Route::post('/quizzes/{id}/duplicate', [AdminQuizController::class, 'duplicate']);
+        Route::post('/quizzes/{id}/questions/sync', [AdminQuizController::class, 'syncQuestions']);
+
+        // ─── Quiz Results & Attempts (Admin) ──────────────────────────────────
+        Route::get('/quizzes/{quiz}/analytics', [QuizAnalyticsController::class, 'show']);
+
+        // ─── Question Bank ────────────────────────────────────────────────────
+        Route::get('/questions', [QuestionController::class, 'index']);
+        Route::post('/questions', [QuestionController::class, 'store']);
+        Route::put('/questions/{id}', [QuestionController::class, 'update']);
+        Route::delete('/questions/{id}', [QuestionController::class, 'destroy']);
+
+        // ─── Platform Analytics Overview ─────────────────────────────────────
+        Route::get('/analytics/overview', [QuizAnalyticsController::class, 'overview']);
     });
 });
+

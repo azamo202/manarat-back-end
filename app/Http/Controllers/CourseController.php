@@ -6,7 +6,7 @@ use App\Models\Course;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
-use Illuminate\Http\Request;
+
 
 class CourseController extends Controller
 {

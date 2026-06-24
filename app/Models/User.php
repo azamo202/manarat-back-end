@@ -71,4 +71,20 @@ class User extends Authenticatable
             ->withPivot(['current_second', 'is_completed'])
             ->withTimestamps();
     }
+
+    /**
+     * Get all quiz attempts by the user.
+     */
+    public function quizAttempts(): HasMany
+    {
+        return $this->hasMany(QuizAttempt::class);
+    }
+
+    /**
+     * Get all quiz results for the user.
+     */
+    public function quizResults(): HasMany
+    {
+        return $this->hasMany(QuizResult::class);
+    }
 }
