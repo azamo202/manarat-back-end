@@ -39,6 +39,10 @@ class Quiz extends Model
             if ($quiz->lesson_id) {
                 Cache::forget("quiz.lesson.{$quiz->lesson_id}");
                 Cache::forget("lesson.{$quiz->lesson_id}");
+                $lesson = $quiz->lesson;
+                if ($lesson && $lesson->course_id) {
+                    Cache::forget("course.{$lesson->course_id}");
+                }
             }
             if ($quiz->course_id) {
                 Cache::forget("course.{$quiz->course_id}");
@@ -51,6 +55,10 @@ class Quiz extends Model
             if ($quiz->lesson_id) {
                 Cache::forget("quiz.lesson.{$quiz->lesson_id}");
                 Cache::forget("lesson.{$quiz->lesson_id}");
+                $lesson = $quiz->lesson;
+                if ($lesson && $lesson->course_id) {
+                    Cache::forget("course.{$lesson->course_id}");
+                }
             }
             if ($quiz->course_id) {
                 Cache::forget("course.{$quiz->course_id}");
