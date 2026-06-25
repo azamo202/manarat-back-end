@@ -13,11 +13,11 @@ class QuestionResource extends JsonResource
 
         return [
             'id'          => $this->id,
-            'type'        => $this->type->value,
-            'type_label'  => $this->type->label(),
+            'type'        => $this->type?->value,
+            'type_label'  => $this->type?->label(),
             'content'     => $this->content,
             'hint'        => $this->hint,
-            'difficulty'  => $this->difficulty->value,
+            'difficulty'  => $this->difficulty?->value,
             'points'      => $this->points,
 
             // Explanation only shown after submission, or to admin

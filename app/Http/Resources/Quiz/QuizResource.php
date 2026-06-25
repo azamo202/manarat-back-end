@@ -16,8 +16,8 @@ class QuizResource extends JsonResource
             'title'                   => $this->title,
             'description'             => $this->description,
             'category'                => $this->category,
-            'difficulty'              => $this->difficulty->value,
-            'difficulty_label'        => $this->difficulty->label(),
+            'difficulty'              => $this->difficulty?->value,
+            'difficulty_label'        => $this->difficulty?->label(),
             'passing_score'           => $this->passing_score,
             'time_limit_minutes'      => $this->time_limit_minutes,
             'max_attempts'            => $this->max_attempts,
@@ -27,20 +27,20 @@ class QuizResource extends JsonResource
             'show_score_after_submit' => $this->show_score_after_submit,
             'active_from'             => $this->active_from?->toIso8601String(),
             'active_until'            => $this->active_until?->toIso8601String(),
-            'status'                  => $this->status->value,
-            'status_label'            => $this->status->label(),
+            'status'                  => $this->status?->value,
+            'status_label'            => $this->status?->label(),
             'lesson_id'               => $this->lesson_id,
             'course_id'               => $this->course_id,
 
             // Conditionally loaded
-            'lesson'    => $this->whenLoaded('lesson', fn() => [
+            'lesson'    => $this->whenLoaded('lesson', fn() => $this->lesson ? [
                 'id'    => $this->lesson->id,
                 'title' => $this->lesson->title,
-            ]),
-            'course'    => $this->whenLoaded('course', fn() => [
+            ] : null),
+            'course'    => $this->whenLoaded('course', fn() => $this->course ? [
                 'id'    => $this->course->id,
                 'title' => $this->course->title,
-            ]),
+            ] : null),
             'analytics' => $this->whenLoaded('analytics'),
 
             // Admin-only fields
