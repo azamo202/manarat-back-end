@@ -16,7 +16,7 @@ class LessonController extends Controller
     public function show(int|string $id): JsonResponse
     {
         $lesson = Cache::remember("lesson.{$id}", 3600, function () use ($id) {
-            return Lesson::with('course')->findOrFail($id);
+            return Lesson::with('course', 'quizzes')->findOrFail($id);
         });
 
         return response()->json($lesson);

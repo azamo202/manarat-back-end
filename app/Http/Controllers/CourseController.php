@@ -31,11 +31,11 @@ class CourseController extends Controller
             return Course::with([
                 'lessonGroups' => function ($query) {
                     $query->orderBy('order_number', 'asc')->with(['lessons' => function ($query) {
-                        $query->orderBy('order_number', 'asc');
+                        $query->orderBy('order_number', 'asc')->with('quizzes');
                     }]);
                 },
                 'lessons' => function ($query) {
-                    $query->whereNull('lesson_group_id')->orderBy('order_number', 'asc');
+                    $query->whereNull('lesson_group_id')->orderBy('order_number', 'asc')->with('quizzes');
                 }
             ])->findOrFail($id);
         });
