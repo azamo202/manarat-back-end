@@ -116,5 +116,16 @@ class QuizService
         }
 
         $quiz->questions()->sync($syncData);
+
+        // Clear associated caches
+        \Illuminate\Support\Facades\Cache::forget("quiz.{$quiz->id}");
+        if ($quiz->lesson_id) {
+            \Illuminate\Support\Facades\Cache::forget("quiz.lesson.{$quiz->lesson_id}");
+            \Illuminate\Support\Facades\Cache::forget("lesson.{$quiz->lesson_id}");
+        }
+        if ($quiz->course_id) {
+            \Illuminate\Support\Facades\Cache::forget("course.{$quiz->course_id}");
+            \Illuminate\Support\Facades\Cache::forget('courses.active');
+        }
     }
 }

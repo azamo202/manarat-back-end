@@ -36,11 +36,26 @@ class Quiz extends Model
     {
         static::saved(function (Quiz $quiz) {
             Cache::forget("quiz.{$quiz->id}");
-            Cache::forget("quiz.lesson.{$quiz->lesson_id}");
+            if ($quiz->lesson_id) {
+                Cache::forget("quiz.lesson.{$quiz->lesson_id}");
+                Cache::forget("lesson.{$quiz->lesson_id}");
+            }
+            if ($quiz->course_id) {
+                Cache::forget("course.{$quiz->course_id}");
+                Cache::forget('courses.active');
+            }
         });
 
         static::deleted(function (Quiz $quiz) {
             Cache::forget("quiz.{$quiz->id}");
+            if ($quiz->lesson_id) {
+                Cache::forget("quiz.lesson.{$quiz->lesson_id}");
+                Cache::forget("lesson.{$quiz->lesson_id}");
+            }
+            if ($quiz->course_id) {
+                Cache::forget("course.{$quiz->course_id}");
+                Cache::forget('courses.active');
+            }
         });
     }
 

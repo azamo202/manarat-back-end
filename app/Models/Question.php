@@ -25,6 +25,26 @@ class Question extends Model
         ];
     }
 
+    protected static function booted(): void
+    {
+        $clearCache = function (Question $question) {
+            foreach ($question->quizzes as $quiz) {
+                \Illuminate\Support\Facades\Cache::forget("quiz.{$quiz->id}");
+                if ($quiz->lesson_id) {
+                    \Illuminate\Support\Facades\Cache::forget("quiz.lesson.{$quiz->lesson_id}");
+                    \Illuminate\Support\Facades\Cache::forget("lesson.{$quiz->lesson_id}");
+                }
+                if ($quiz->course_id) {
+                    \Illuminate\Support\Facades\Cache::forget("course.{$quiz->course_id}");
+                    \Illuminate\Support\Facades\Cache::forget('courses.active');
+                }
+            }
+        };
+
+        static::saved($clearCache);
+        static::deleted($clearCache);
+    }
+
     // ─── Relationships ─────────────────────────────────────────────────────────
 
     public function creator(): BelongsTo
