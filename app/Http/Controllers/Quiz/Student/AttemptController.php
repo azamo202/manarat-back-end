@@ -43,6 +43,17 @@ class AttemptController extends Controller
     }
 
     /**
+     * GET /quizzes/{quiz}/attempts
+     * Get user's attempts for a quiz.
+     */
+    public function index(int $quizId, Request $request): JsonResponse
+    {
+        $attempts = $this->attemptRepository->getUserAttempts($quizId, $request->user()->id);
+
+        return response()->json(AttemptResource::collection($attempts));
+    }
+
+    /**
      * GET /quizzes/{quiz}/attempts/{attempt}
      * Get attempt state (for page refresh recovery).
      */

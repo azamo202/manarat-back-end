@@ -52,6 +52,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::middleware('throttle:10,1')->group(function () {
         Route::post('/quizzes/{quiz}/attempts', [AttemptController::class, 'start']);
     });
+    
+    Route::get('/quizzes/{quiz}/attempts', [AttemptController::class, 'index']);
 
     Route::get('/quizzes/{quiz}/attempts/{attempt}', [AttemptController::class, 'show']);
 
