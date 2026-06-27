@@ -92,7 +92,7 @@ class QuizAttemptService
                     'question_id' => $answerData['question_id'],
                 ],
                 [
-                    'answer_value'        => $answerData['answer_value'],
+                    'answer_value'        => $answerData['answer_value'] ?? null,
                     'time_spent_seconds'  => $answerData['time_spent_seconds'] ?? 0,
                     'answered_at'         => now(),
                 ],
