@@ -29,6 +29,14 @@ class QuizAttemptService
     public function startAttempt(Quiz $quiz, int $userId, string $ip, string $userAgent): QuizAttempt
     {
         return DB::transaction(function () use ($quiz, $userId, $ip, $userAgent) {
+            // Cancel any active in-progress attempt before starting a new one
+            $activeAttempt = $this->attemptRepository->getActiveAttempt($quiz->id, $userId);
+            if ($activeAttempt) {
+                $this->attemptRepository->update($activeAttempt, [
+                    'status' => AttemptStatus::Abandoned->value,
+                ]);
+            }
+
             // Security checks
             $this->securityService->assertCanAttempt($quiz, $userId);
 
