@@ -134,7 +134,7 @@ class QuizAttemptService
             event(new QuizAttemptSubmitted($attempt));
 
             // Dispatch async grading job
-            ProcessQuizSubmission::dispatch($attempt->id);
+            ProcessQuizSubmission::dispatch($attempt->id)->afterCommit();
 
             return $attempt;
         });
@@ -151,7 +151,7 @@ class QuizAttemptService
                 'status' => AttemptStatus::TimedOut->value,
             ]);
 
-            ProcessQuizSubmission::dispatch($attempt->id);
+            ProcessQuizSubmission::dispatch($attempt->id)->afterCommit();
 
             return $attempt->fresh();
         }

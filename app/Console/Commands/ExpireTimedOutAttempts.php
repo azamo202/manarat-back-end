@@ -26,7 +26,7 @@ class ExpireTimedOutAttempts extends Command
                 ->get();
 
             foreach ($expiredAttempts as $attempt) {
-                ProcessQuizSubmission::dispatch($attempt->id);
+                ProcessQuizSubmission::dispatch($attempt->id)->afterCommit();
             }
         }
 

@@ -21,9 +21,10 @@ class ProcessQuizSubmission implements ShouldQueue
 
     public int $tries   = 3;
     public int $timeout = 120;
-    public $afterCommit = true;
 
-    public function __construct(public readonly int $attemptId) {}
+    public function __construct(public readonly int $attemptId)
+    {
+    }
 
     /**
      * Prevent concurrent processing of the same attempt.
