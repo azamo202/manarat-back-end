@@ -57,7 +57,7 @@ class ProgressController extends Controller
         }
 
         // Apply Policy authorization
-        $this->authorize('update', $progress);
+        \Illuminate\Support\Facades\Gate::authorize('update', $progress);
 
         $isCompleted = $progress->is_completed ||
             ($validated['current_second'] >= (0.95 * $lesson->duration_in_seconds));

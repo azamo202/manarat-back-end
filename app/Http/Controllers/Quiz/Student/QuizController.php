@@ -45,7 +45,7 @@ class QuizController extends Controller
     {
         $quiz = $this->quizRepository->findByIdOrFail($id);
 
-        $this->authorize('view', $quiz);
+        \Illuminate\Support\Facades\Gate::authorize('view', $quiz);
 
         $quiz->load(['questions.options', 'questions.media']);
 

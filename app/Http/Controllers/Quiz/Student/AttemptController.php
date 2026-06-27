@@ -50,7 +50,7 @@ class AttemptController extends Controller
     {
         $attempt = $this->attemptRepository->findByIdOrFail($attemptId);
 
-        $this->authorize('view', $attempt);
+        \Illuminate\Support\Facades\Gate::authorize('view', $attempt);
 
         // Check if timer expired
         $attempt = $this->attemptService->resumeAttempt($attempt);
@@ -68,7 +68,7 @@ class AttemptController extends Controller
     {
         $attempt = $this->attemptRepository->findByIdOrFail($attemptId);
 
-        $this->authorize('update', $attempt);
+        \Illuminate\Support\Facades\Gate::authorize('update', $attempt);
 
         $this->attemptService->saveAnswers($attempt, $request->answers);
 
