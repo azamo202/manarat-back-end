@@ -21,6 +21,7 @@ class ProcessQuizSubmission implements ShouldQueue
 
     public int $tries   = 3;
     public int $timeout = 120;
+    public bool $afterCommit = true;
 
     public function __construct(public readonly int $attemptId) {}
 
@@ -63,6 +64,7 @@ class ProcessQuizSubmission implements ShouldQueue
             'passed'              => $resultDTO->passed,
             'certificate_eligible'=> $resultDTO->certificateEligible,
             'attempt_number'      => $resultDTO->attemptNumber,
+            'created_at'          => now(),
         ]);
 
         // Fire domain events

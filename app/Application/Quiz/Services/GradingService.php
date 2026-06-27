@@ -55,6 +55,7 @@ class GradingService
 
         $attemptNumber = QuizAttempt::where('quiz_id', $quiz->id)
                                     ->where('user_id', $attempt->user_id)
+                                    ->where('id', '<', $attempt->id)
                                     ->whereIn('status', ['submitted', 'timed_out'])
                                     ->count() + 1;
 
@@ -115,8 +116,8 @@ class GradingService
             return [false, 0];
         }
 
-        $correctIds  = $question->getCorrectOptionIds();
-        $selectedIds = $value['selected_option_ids'];
+        $correctIds  = array_map('intval', $question->getCorrectOptionIds());
+        $selectedIds = array_map('intval', (array) $value['selected_option_ids']);
 
         sort($correctIds);
         sort($selectedIds);
@@ -160,8 +161,9 @@ class GradingService
             return [false, 0];
         }
 
-        $correctOrder = $question->options->sortBy('order_number')->pluck('id')->toArray();
-        $isCorrect    = $value['order'] === $correctOrder;
+        $correctOrder = array_map('intval', $question->options->sortBy('order_number')->pluck('id')->toArray());
+        $studentOrder = array_map('intval', (array) $value['order']);
+        $isCorrect    = $studentOrder === $correctOrder;
 
         return [$isCorrect, $isCorrect ? $points : 0];
     }

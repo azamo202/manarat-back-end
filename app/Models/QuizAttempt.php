@@ -70,14 +70,14 @@ class QuizAttempt extends Model
     /**
      * Remaining time in seconds, 0 if expired.
      */
-    public function getRemainingSecondsAttribute(): int
+    public function getRemainingSecondsAttribute(): ?int
     {
         if ($this->time_limit_expires_at === null) {
-            return PHP_INT_MAX; // unlimited
+            return null; // unlimited
         }
 
         $remaining = now()->diffInSeconds($this->time_limit_expires_at, false);
 
-        return max(0, $remaining);
+        return (int) max(0, $remaining);
     }
 }

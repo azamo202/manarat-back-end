@@ -18,6 +18,7 @@ use App\Http\Controllers\AdminController;
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
 Route::get('/courses', [CourseController::class, 'index']);
+Route::get('/courses/{id}', [CourseController::class, 'show']);
 
 Route::middleware('auth:sanctum')->group(function () {
     Route::post('/logout', [AuthController::class, 'logout']);
@@ -36,7 +37,6 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::get('/courses/{course}/lessons/{lesson}', [LessonController::class, 'show']);
 
-    Route::get('/courses/{id}', [CourseController::class, 'show']);
     Route::get('/lessons/{id}', [LessonController::class, 'show']);
 
     Route::get('/progress/{lesson}', [ProgressController::class, 'show']);
