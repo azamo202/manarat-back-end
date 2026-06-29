@@ -88,7 +88,7 @@ class AttemptController extends Controller
 
     /**
      * POST /quizzes/{quiz}/attempts/{attempt}/submit
-     * Final submission.
+     * Final submission. Grading is done synchronously (no queue worker needed).
      */
     public function submit(int $quizId, int $attemptId, SubmitAttemptRequest $request): JsonResponse
     {
@@ -100,9 +100,13 @@ class AttemptController extends Controller
 
         $attempt = $this->attemptService->submit($dto);
 
+        // Since grading is now synchronous, the result is already available
+        $result = $attempt->result()->first();
+
         return response()->json([
-            'message'    => 'تم تسليم الاختبار بنجاح. جارٍ معالجة النتيجة.',
+            'message'    => 'تم تسليم الاختبار بنجاح.',
             'attempt_id' => $attempt->id,
+            'result_id'  => $result?->id,
             'status'     => $attempt->status->value,
         ]);
     }

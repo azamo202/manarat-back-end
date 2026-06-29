@@ -6,14 +6,19 @@ use App\Application\Quiz\Repositories\AttemptRepositoryInterface;
 use App\Application\Quiz\Jobs\ProcessQuizSubmission;
 use App\Domain\Quiz\DTOs\SubmitAttemptDTO;
 use App\Domain\Quiz\Enums\AttemptStatus;
+use App\Domain\Quiz\Events\CertificateEligible;
 use App\Domain\Quiz\Events\QuizAttemptStarted;
 use App\Domain\Quiz\Events\QuizAttemptSubmitted;
+use App\Domain\Quiz\Events\QuizFailed;
+use App\Domain\Quiz\Events\QuizPassed;
 use App\Models\Quiz;
 use App\Models\QuizAnswer;
 use App\Models\QuizAttempt;
+use App\Models\QuizResult;
 use App\Models\LessonProgress;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
 
 class QuizAttemptService
@@ -21,6 +26,8 @@ class QuizAttemptService
     public function __construct(
         private readonly AttemptRepositoryInterface $attemptRepository,
         private readonly QuizSecurityService        $securityService,
+        private readonly GradingService             $gradingService,
+        private readonly AnalyticsService           $analyticsService,
     ) {}
 
     /**
@@ -110,10 +117,12 @@ class QuizAttemptService
 
     /**
      * Submit the attempt for grading.
+     * التصحيح يتم بشكل مباشر (synchronous) لأن الاستضافة الحالية لا تدعم queue workers.
+     * الـ Job (ProcessQuizSubmission) محفوظ للاستخدام مستقبلاً عند توفر استضافة تدعم queues.
      */
     public function submit(SubmitAttemptDTO $dto): QuizAttempt
     {
-        return DB::transaction(function () use ($dto) {
+        $attempt = DB::transaction(function () use ($dto) {
             $attempt = $this->attemptRepository->findByIdOrFail($dto->attemptId);
 
             // Security checks
@@ -133,11 +142,63 @@ class QuizAttemptService
 
             event(new QuizAttemptSubmitted($attempt));
 
-            // Dispatch async grading job
-            ProcessQuizSubmission::dispatch($attempt->id)->afterCommit();
-
             return $attempt;
         });
+
+        // Grade immediately (synchronous) — no queue worker required
+        $this->gradeAttemptSync($attempt);
+
+        return $attempt->fresh();
+    }
+
+    /**
+     * Run grading synchronously (بديل مؤقت عن الـ Queue).
+     * عند الانتقال لاستضافة تدعم queues، استبدل هذا باستخدام ProcessQuizSubmission::dispatch()
+     */
+    private function gradeAttemptSync(QuizAttempt $attempt): void
+    {
+        try {
+            // Prevent re-grading
+            if ($attempt->result()->exists()) {
+                return;
+            }
+
+            $attempt->load(['quiz', 'answers.question.options', 'user']);
+
+            $resultDTO = $this->gradingService->grade($attempt);
+
+            $result = QuizResult::create([
+                'quiz_id'              => $resultDTO->quizId,
+                'attempt_id'           => $resultDTO->attemptId,
+                'user_id'              => $resultDTO->userId,
+                'raw_score'            => $resultDTO->rawScore,
+                'max_score'            => $resultDTO->maxScore,
+                'final_score'          => $resultDTO->rawScore,
+                'percentage'           => $resultDTO->percentage,
+                'duration_seconds'     => $resultDTO->durationSeconds,
+                'passed'               => $resultDTO->passed,
+                'certificate_eligible' => $resultDTO->certificateEligible,
+                'attempt_number'       => $resultDTO->attemptNumber,
+                'created_at'           => now(),
+            ]);
+
+            if ($resultDTO->passed) {
+                event(new QuizPassed($result));
+                if ($resultDTO->certificateEligible) {
+                    event(new CertificateEligible($result));
+                }
+            } else {
+                event(new QuizFailed($result));
+            }
+
+            $attempt->refresh();
+            $this->analyticsService->updateAfterSubmission($attempt);
+
+        } catch (\Throwable $e) {
+            Log::error("Synchronous grading failed for attempt {$attempt->id}: " . $e->getMessage(), [
+                'exception' => $e,
+            ]);
+        }
     }
 
     /**
@@ -151,7 +212,8 @@ class QuizAttemptService
                 'status' => AttemptStatus::TimedOut->value,
             ]);
 
-            ProcessQuizSubmission::dispatch($attempt->id)->afterCommit();
+            // Grade synchronously (no queue worker on current hosting)
+            $this->gradeAttemptSync($attempt->fresh());
 
             return $attempt->fresh();
         }
